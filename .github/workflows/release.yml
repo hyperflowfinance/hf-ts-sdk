@@ -1,0 +1,77 @@
+name: Release
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install --ignore-scripts
+      - run: mkdir artifacts
+      - name: Derive version from tag
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([+-].+)?$ ]]
+          npm version "$version" --no-git-tag-version
+      - run: npm pack --pack-destination artifacts
+        env:
+          HYPERFLOW_AUTH_HEADER: ${{ vars.HYPERFLOW_AUTH_HEADER }}
+          HYPERFLOW_AUTH_VALUE: ${{ secrets.HYPERFLOW_AUTH_VALUE }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: npm-package
+          path: artifacts/*.tgz
+          if-no-files-found: error
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: npm-package
+          path: artifacts
+      - name: Test installed package and declarations
+        run: |
+          mkdir package-test
+          cp tests/* package-test/
+          cd package-test
+          npm init --yes
+          npm install --ignore-scripts --no-package-lock ../artifacts/*.tgz typescript@5.9.3
+          node --test *.test.cjs
+          npx tsc --strict --noEmit --target ES2022 --module Node16 --moduleResolution Node16 types.ts
+  publish:
+    needs: [build, test]
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - uses: actions/download-artifact@v4
+        with:
+          name: npm-package
+          path: artifacts
+      - name: Publish tested artifact using npm trusted publishing
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          tag=latest
+          if [[ "$version" == *-* ]]; then tag=next; fi
+          npm publish artifacts/*.tgz --access public --provenance --tag "$tag"

@@ -1,0 +1,9 @@
+/node_modules/
+/src/generated/
+/dist/
+/artifacts/
+/package-test/
+*.tgz
+.env
+*.log
+.DS_Store

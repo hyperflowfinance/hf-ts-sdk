@@ -1,0 +1,42 @@
+{
+  "name": "hf-ts-sdk",
+  "version": "0.0.0-development",
+  "description": "Typed TypeScript client for the HyperFlow GraphQL API.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hyperflowfinance/hf-ts-sdk.git"
+  },
+  "homepage": "https://hyperflowlabs.com",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "generate": "node codegen/generate.mjs",
+    "build": "npm run generate && tsc",
+    "test": "node --test tests/*.test.cjs",
+    "prepack": "npm run build"
+  },
+  "devDependencies": {
+    "@genql/cli": "6.3.4",
+    "@types/node": "22.19.0",
+    "graphql": "16.11.0",
+    "typescript": "5.9.3"
+  }
+}
