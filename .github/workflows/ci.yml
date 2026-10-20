@@ -43,9 +43,9 @@ jobs:
       - name: Test installed package and declarations
         run: |
           mkdir package-test
-          cp tests/* package-test/
+          cp -r tests examples package-test/
           cd package-test
           npm init --yes
           npm install --ignore-scripts --no-package-lock ../artifacts/*.tgz typescript@5.9.3
-          node --test *.test.cjs
-          npx tsc --strict --noEmit --target ES2022 --module Node16 --moduleResolution Node16 types.ts
+          node --test tests/*.test.mjs
+          npx tsc --strict --noEmit --target ES2022 --module Node16 --moduleResolution Node16 tests/types.ts

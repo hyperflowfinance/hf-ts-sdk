@@ -1,5 +1,5 @@
 {
-  "name": "hf-ts-sdk",
+  "name": "@hyperflowlabs/hf-ts-sdk",
   "version": "0.0.0-development",
   "description": "Typed TypeScript client for the HyperFlow GraphQL API.",
   "license": "MIT",
@@ -30,7 +30,7 @@
   "scripts": {
     "generate": "node codegen/generate.mjs",
     "build": "npm run generate && tsc",
-    "test": "node --test tests/*.test.cjs",
+    "test": "node --test tests/*.test.mjs",
     "prepack": "npm run build"
   },
   "devDependencies": {
