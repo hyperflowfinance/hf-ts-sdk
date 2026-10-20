@@ -7,7 +7,7 @@ import {
 const url = process.env.HYPERFLOW_API_URL || "https://api.hyperflowlabs.com/graphql";
 const headers = {"Content-Type": "application/json"};
 if (process.env.HYPERFLOW_AUTH_VALUE) {
-  headers[process.env.HYPERFLOW_AUTH_HEADER || "Authorization"] =
+  headers[process.env.HYPERFLOW_AUTH_HEADER || "x-api-key"] =
     process.env.HYPERFLOW_AUTH_VALUE;
 }
 const response = await fetch(url, {

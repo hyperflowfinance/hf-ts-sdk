@@ -9,11 +9,11 @@ Node.js 22+ and browsers with native fetch; no runtime dependencies.
 After the first release:
 
 ```sh
-npm install hf-ts-sdk
+npm install @hyperflowlabs/hf-ts-sdk
 ```
 
 ```ts
-import {connect} from "hf-ts-sdk";
+import {connect} from "@hyperflowlabs/hf-ts-sdk";
 
 const client = connect();
 const data = await client.query({metadata: {chainId: true}});
@@ -22,13 +22,13 @@ console.log(data.metadata);
 
 Queries and mutations use [Genql](https://genql.dev/docs) selection objects.
 Custom scalars are `unknown`: narrow them before using their wire values.
-CommonJS `require("hf-ts-sdk")` is supported too. Browser bundlers can consume
+CommonJS `require("@hyperflowlabs/hf-ts-sdk")` is supported too. Browser bundlers can consume
 the CommonJS package; no Node-only APIs are used by the runtime.
 
 | Option | Environment variable | Default |
 | --- | --- | --- |
 | `url` | `HYPERFLOW_API_URL` | `https://api.hyperflowlabs.com/graphql` |
-| `authHeader` | `HYPERFLOW_AUTH_HEADER` | `Authorization` |
+| `authHeader` | `HYPERFLOW_AUTH_HEADER` | `x-api-key` |
 | `authValue` | `HYPERFLOW_AUTH_VALUE` | no auth |
 
 Explicit options override environment variables; `authValue: ""` disables
@@ -36,6 +36,17 @@ environment auth. Browsers use explicit options. `headers` accepts native
 Headers, tuples, objects, or an async callback, resolved on every request.
 `fetch` accepts a custom implementation. HTTP/network/GraphQL errors reject.
 The generated `createClient` and schema types are also exported.
+
+## Runnable example
+
+After building, run `node examples/metadata.mjs` from this checkout.
+Set `HYPERFLOW_AUTH_VALUE` for authenticated requests; the default header is
+`x-api-key`. The example exports `getMetadata(options)` for reuse.
+Tests execute this exact example with mocked fetch responses, never the live API:
+
+```sh
+npm test
+```
 
 ## Generate and check (Docker)
 
@@ -53,16 +64,19 @@ The generator accepts the same environment variables as the client.
 
 CI generates once, uploads the tarball, then installs and tests it (including
 TypeScript declarations) on Node 22 and 24. It does not test an unbuilt source tree.
+Only schema generation uses the live API; example tests forbid real fetch calls.
 
 ## npm continuous deployment
 
 Only pushing an explicitly authorized `v<semver>` tag publishes.
 The release workflow derives the version from the tag, generates, builds and
 tests once, then publishes that exact tested tarball with OIDC provenance.
+Keep the tarball path prefixed with `./` so npm treats it as a local file.
+Create release tags from approved `main`, after all intended changes are merged.
 Prerelease tags publish under npm's `next` dist-tag; stable releases use `latest`.
 The manifest's `0.0.0-development` is only a non-release placeholder.
 
-Configure npm's trusted publisher for package `hf-ts-sdk`:
+Configure npm's trusted publisher for package `@hyperflowlabs/hf-ts-sdk`:
 
 - GitHub owner: `hyperflowfinance`
 - Repository: `hf-ts-sdk`

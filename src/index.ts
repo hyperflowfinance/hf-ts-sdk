@@ -14,7 +14,7 @@ export function connect({url, authHeader, authValue, headers, ...options}: Conne
     url: url ?? env.HYPERFLOW_API_URL ?? "https://api.hyperflowlabs.com/graphql",
     headers: async () => {
       const merged = new Headers(typeof headers === "function" ? await headers() : headers);
-      if (value) merged.set(authHeader ?? env.HYPERFLOW_AUTH_HEADER ?? "Authorization", value);
+      if (value) merged.set(authHeader ?? env.HYPERFLOW_AUTH_HEADER ?? "x-api-key", value);
       return Object.fromEntries(merged);
     },
   });

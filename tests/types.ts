@@ -1,4 +1,4 @@
-import {connect, type ConnectOptions} from "hf-ts-sdk";
+import {connect, type ConnectOptions} from "@hyperflowlabs/hf-ts-sdk";
 
 const options: ConnectOptions = {authValue: "", headers: new Headers()};
 const client = connect(options);
