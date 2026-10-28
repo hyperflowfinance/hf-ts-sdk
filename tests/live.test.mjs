@@ -1,7 +1,18 @@
 import assert from "node:assert/strict";
 import {test} from "node:test";
 import {print} from "graphql";
+import {generateQueryOp} from "@hyperflowlabs/hf-ts-sdk";
+import {toDocument} from "@hyperflowlabs/hf-ts-sdk/document";
 import {metadataDocument, newBlocksDocument, watchBlocks} from "../examples/live.mjs";
+
+test("toDocument exports the shared parser and rejects invalid GraphQL", () => {
+  const op = generateQueryOp({metadata: {chainId: true}});
+  const document = toDocument(op);
+  assert.equal(document.kind, "Document");
+  assert.equal(document, metadataDocument().document);
+  assert.equal(toDocument(op), document);
+  assert.throws(() => toDocument({query: "query {"}), /Syntax Error/);
+});
 
 test("query documents parse once per shape and keep values in variables", () => {
   const first = metadataDocument();

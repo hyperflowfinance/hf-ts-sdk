@@ -1,5 +1,5 @@
 import {connect, subscribe, type ConnectOptions, type Scalars, type WsClient} from "@hyperflowlabs/hf-ts-sdk";
-import {queryDocument} from "@hyperflowlabs/hf-ts-sdk/document";
+import {queryDocument, toDocument, type TypedDocument} from "@hyperflowlabs/hf-ts-sdk/document";
 
 const options: ConnectOptions = {authValue: "", headers: new Headers()};
 const client = connect(options);
@@ -15,6 +15,12 @@ const {document} = queryDocument({metadata: {chainId: true}});
 type Data = NonNullable<ReturnType<NonNullable<typeof document.__apiType>>>;
 const chainId: Data["metadata"]["chainId"] = null;
 void chainId;
+const parsed: TypedDocument<Data> = toDocument<Data>({query: "{metadata{chainId}}"});
+void parsed;
+const raw = toDocument({query: "{metadata{chainId}}"});
+// @ts-expect-error Raw operations do not carry result type information.
+const untyped: TypedDocument<Data> = raw;
+void untyped;
 const ws: WsClient = {subscribe: () => () => {}};
 subscribe(ws, {newBlocks: {number: true}}, {
   next: ({data}) => { const n: string | null | undefined = data?.newBlocks.number; void n; },

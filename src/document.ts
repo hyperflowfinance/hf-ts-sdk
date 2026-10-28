@@ -17,10 +17,15 @@ export interface Operation<R> {
 // ponytail: unbounded cache; keys are query shapes (values live in variables), so it stays small.
 const parsed = new Map<string, DocumentNode>();
 
-function toOperation<R>({query, variables}: {query: string; variables?: Record<string, unknown>}) {
+/** Parse a generated operation; supply its result type when using this low-level helper. */
+export function toDocument<R = unknown>({query}: {query: string}): TypedDocument<R> {
   let document = parsed.get(query);
   if (!document) parsed.set(query, document = parse(query));
-  return {document, variables: variables ?? {}} as Operation<R>;
+  return document;
+}
+
+function toOperation<R>(op: {query: string; variables?: Record<string, unknown>}): Operation<R> {
+  return {document: toDocument<R>(op), variables: op.variables ?? {}};
 }
 
 export const queryDocument = <R extends QueryGenqlSelection>(fields: R & {__name?: string}) =>

@@ -43,10 +43,10 @@ The generated `createClient` and schema types are also exported.
 client and returns its unsubscribe. `@hyperflowlabs/hf-ts-sdk/document` exports
 `queryDocument`/`mutationDocument`/`subscriptionDocument` → `{document, variables}`,
 a `TypedDocumentNode` for Apollo `useQuery(document, {variables})`, urql etc.
-(optional `graphql` v16 peer). See `examples/live.mjs`.
+(optional `graphql` v16 peer). `toDocument<Result>(op)` parses a generated operation
+into a typed document; pass `op.variables` separately. See `examples/live.mjs`.
 
 ## Runnable example
-
 After building, run `node examples/metadata.mjs` from this checkout.
 Set `HYPERFLOW_AUTH_VALUE` for authenticated requests; the default header is
 `x-api-key`. The example exports `getMetadata(options)` for reuse.
