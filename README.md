@@ -21,7 +21,7 @@ console.log(data.metadata);
 ```
 
 Queries and mutations use [Genql](https://genql.dev/docs) selection objects.
-Custom scalars are `unknown`: narrow them before using their wire values.
+`BigInt`/`DateTime` are `string`; other custom scalars are `unknown`: narrow them.
 CommonJS `require("@hyperflowlabs/hf-ts-sdk")` is supported too. Browser bundlers can consume
 the CommonJS package; no Node-only APIs are used by the runtime.
 
@@ -37,8 +37,16 @@ Headers, tuples, objects, or an async callback, resolved on every request.
 `fetch` accepts a custom implementation. HTTP/network/GraphQL errors reject.
 The generated `createClient` and schema types are also exported.
 
-## Runnable example
+## Subscriptions and Apollo
 
+`subscribe(ws, selection, sink)` runs a typed subscription on any graphql-ws
+client and returns its unsubscribe. `@hyperflowlabs/hf-ts-sdk/document` exports
+`queryDocument`/`mutationDocument`/`subscriptionDocument` → `{document, variables}`,
+a `TypedDocumentNode` for Apollo `useQuery(document, {variables})`, urql etc.
+(optional `graphql` v16 peer). `toDocument<Result>(op)` parses a generated operation
+into a typed document; pass `op.variables` separately. See `examples/live.mjs`.
+
+## Runnable example
 After building, run `node examples/metadata.mjs` from this checkout.
 Set `HYPERFLOW_AUTH_VALUE` for authenticated requests; the default header is
 `x-api-key`. The example exports `getMetadata(options)` for reuse.

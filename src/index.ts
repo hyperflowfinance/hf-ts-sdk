@@ -1,5 +1,28 @@
-import { createClient } from "./generated";
+import {
+  createClient, generateSubscriptionOp,
+  type SubscriptionGenqlSelection, type SubscriptionResult,
+} from "./generated";
 export * from "./generated";
+
+export interface SubscriptionSink<T> {
+  next(value: {data?: T | null; errors?: readonly unknown[]}): void;
+  error(error: unknown): void;
+  complete(): void;
+}
+
+/** Structural graphql-ws `Client`; pass `createClient(...)` from graphql-ws. */
+export interface WsClient {
+  subscribe(payload: {query: string; variables?: Record<string, unknown>},
+    sink: SubscriptionSink<any>): () => void;
+}
+
+/** Typed live subscription; returns the unsubscribe function. */
+export function subscribe<R extends SubscriptionGenqlSelection>(
+  ws: WsClient, fields: R & {__name?: string}, sink: SubscriptionSink<SubscriptionResult<R>>,
+): () => void {
+  const {query, variables} = generateSubscriptionOp(fields);
+  return ws.subscribe({query, variables}, sink);
+}
 
 export type ConnectOptions = NonNullable<Parameters<typeof createClient>[0]> & {
   authHeader?: string;

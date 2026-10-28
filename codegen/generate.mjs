@@ -22,9 +22,11 @@ if (result.errors?.length || !result.data) {
   throw new Error("Schema introspection failed: GraphQL errors or missing data.");
 }
 const schema = buildClientSchema(result.data);
+// BigInt/DateTime arrive as JSON strings on the wire; other custom scalars stay unknown.
+const stringScalars = new Set(["BigInt", "DateTime"]);
 const scalarTypes = Object.fromEntries(Object.values(schema.getTypeMap())
   .filter(type => isScalarType(type) && !isSpecifiedScalarType(type))
-  .map(type => [type.name, "unknown"]));
+  .map(type => [type.name, stringScalars.has(type.name) ? "string" : "unknown"]));
 await generate({
   schema: printSchema(schema), output: "./src/generated",
   scalarTypes, sortProperties: true,
