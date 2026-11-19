@@ -21,6 +21,18 @@ console.log(data.metadata);
 ```
 
 Queries and mutations use [Genql](https://genql.dev/docs) selection objects.
+
+Genql has no alias syntax. `client.queryAliased({alias: {rootField: {...}}}, name?)`
+sends several root fields (including the same field twice) in **one** request and
+returns data keyed by alias. `generateAliasedQueryOp` returns the raw `{query, variables}`.
+
+```ts
+const page = (dir: "fromAddress" | "toAddress") => ({transactions: {
+  __args: {input: {filters: {chainId: {gte: 1, lte: 1}, [dir]: {eq: wallet}}}},
+  items: {hash: true, fromAddress: true, toAddress: true},
+}});
+const {out, in: incoming} = await client.queryAliased({out: page("fromAddress"), in: page("toAddress")});
+```
 `BigInt`/`DateTime` are `string`; other custom scalars are `unknown`: narrow them.
 CommonJS `require("@hyperflowlabs/hf-ts-sdk")` is supported too. Browser bundlers can consume
 the CommonJS package; no Node-only APIs are used by the runtime.
