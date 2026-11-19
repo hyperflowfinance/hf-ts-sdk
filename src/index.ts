@@ -2,7 +2,10 @@ import {
   createClient, generateSubscriptionOp,
   type SubscriptionGenqlSelection, type SubscriptionResult,
 } from "./generated";
+import {createFetcher} from "./generated/runtime";
+import {generateAliasedQueryOp, type AliasedResult, type AliasedSelection} from "./aliases";
 export * from "./generated";
+export * from "./aliases";
 
 export interface SubscriptionSink<T> {
   next(value: {data?: T | null; errors?: readonly unknown[]}): void;
@@ -32,7 +35,7 @@ export type ConnectOptions = NonNullable<Parameters<typeof createClient>[0]> & {
 export function connect({url, authHeader, authValue, headers, ...options}: ConnectOptions = {}) {
   const env = typeof process === "undefined" ? {} : process.env;
   const value = authValue ?? env.HYPERFLOW_AUTH_VALUE;
-  return createClient({
+  const resolved = {
     ...options,
     url: url ?? env.HYPERFLOW_API_URL ?? "https://api.hyperflowlabs.com/graphql",
     headers: async () => {
@@ -40,5 +43,11 @@ export function connect({url, authHeader, authValue, headers, ...options}: Conne
       if (value) merged.set(authHeader ?? env.HYPERFLOW_AUTH_HEADER ?? "x-api-key", value);
       return Object.fromEntries(merged);
     },
+  };
+  const fetcher = createFetcher(resolved);
+  return Object.assign(createClient(resolved), {
+    /** Several aliased root fields in one request, e.g. both directions of a wallet's transfers. */
+    queryAliased: <R extends AliasedSelection>(selections: R, name?: string): Promise<AliasedResult<R>> =>
+      fetcher(generateAliasedQueryOp(selections, name)),
   });
 }

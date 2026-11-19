@@ -9,8 +9,8 @@ void client.query({metadata: {chainId: true}});
 // @ts-expect-error Unknown fields must be rejected by the generated schema types.
 void client.query({not_a_hyperflow_field: true});
 
-const big: Scalars["BigInt"] = "1", at: Scalars["DateTime"] = "2026-01-01T00:00:00Z";
-void big; void at;
+const big: Scalars["BigInt"] = "1";
+void big;
 const {document} = queryDocument({metadata: {chainId: true}});
 type Data = NonNullable<ReturnType<NonNullable<typeof document.__apiType>>>;
 const chainId: Data["metadata"]["chainId"] = null;
@@ -22,6 +22,11 @@ const raw = toDocument({query: "{metadata{chainId}}"});
 const untyped: TypedDocument<Data> = raw;
 void untyped;
 const ws: WsClient = {subscribe: () => () => {}};
+void client.queryAliased({out: {metadata: {chainId: true}}}).then(data => {
+  const id: Data["metadata"]["chainId"] = data.out.chainId; void id;
+  // @ts-expect-error Results are keyed by alias, not by root field.
+  void data.metadata;
+});
 subscribe(ws, {newBlocks: {number: true}}, {
   next: ({data}) => { const n: string | null | undefined = data?.newBlocks.number; void n; },
   error: () => {}, complete: () => {},
