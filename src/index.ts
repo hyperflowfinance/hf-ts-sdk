@@ -2,6 +2,7 @@ import {
   createClient, generateSubscriptionOp,
   type SubscriptionGenqlSelection, type SubscriptionResult,
 } from "./generated";
+import {DEFAULT_ENDPOINT} from "./generated/default-endpoint";
 import {createFetcher} from "./generated/runtime";
 import {generateAliasedQueryOp, type AliasedResult, type AliasedSelection} from "./aliases";
 export * from "./generated";
@@ -37,7 +38,7 @@ export function connect({url, authHeader, authValue, headers, ...options}: Conne
   const value = authValue ?? env.HYPERFLOW_AUTH_VALUE;
   const resolved = {
     ...options,
-    url: url ?? env.HYPERFLOW_API_URL ?? "https://api.hyperflowlabs.com/graphql",
+    url: url ?? env.HYPERFLOW_API_URL ?? DEFAULT_ENDPOINT,
     headers: async () => {
       const merged = new Headers(typeof headers === "function" ? await headers() : headers);
       if (value) merged.set(authHeader ?? env.HYPERFLOW_AUTH_HEADER ?? "x-api-key", value);
