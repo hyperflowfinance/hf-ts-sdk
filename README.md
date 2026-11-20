@@ -90,3 +90,8 @@ Never commit credentials. No release tag is created by repository setup.
 
 Verified immutable stage snapshots publish public previews to npm's `stage` dist-tag; install with `npm install @hyperflowlabs/hf-ts-sdk@stage`.
 Preview builds default to stage; stable builds default to production. Explicit `url` and `HYPERFLOW_API_URL` settings override either.
+
+Verify the installed version against the schema manifest, run `npm test`, then
+smoke-test a read-only query with `node examples/metadata.mjs` against
+`https://stage.api.hyperflowlabs.com/graphql`. Promote only after the stage query
+succeeds; stable tags remain production-default.
