@@ -4,6 +4,8 @@ import {createRequire} from "node:module";
 import {connect, createClient, GenqlError} from "@hyperflowlabs/hf-ts-sdk";
 import {getMetadata} from "../examples/metadata.mjs";
 const data = {metadata: {chainId: "1"}};
+const defaultEndpoint = process.env.HYPERFLOW_EXPECTED_API_URL
+  || "https://api.hyperflowlabs.com/graphql";
 
 beforeEach(t => {
   const saved = {...process.env};
@@ -64,7 +66,7 @@ test("example defaults auth to x-api-key and can disable environment auth", asyn
   for (const authValue of [undefined, "test", ""]) await getMetadata({
     authValue,
     fetch: async (url, options) => {
-      assert.equal(url, "https://api.hyperflowlabs.com/graphql");
+      assert.equal(url, defaultEndpoint);
       assert.equal(options.headers["x-api-key"], (authValue ?? "must-not-send") || undefined);
       assert.equal(options.headers.authorization, undefined);
       return Response.json({data});
