@@ -1,7 +1,26 @@
 name: Release
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('Stage SDK preview {0}', inputs.preview_version) || format('Release {0}', github.ref_name) }}
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      preview_version:
+        description: "Deterministic npm stage preview version"
+        required: true
+        type: string
+      schema_hash:
+        required: true
+        type: string
+      captured_at:
+        required: true
+        type: string
+      schema_sdl_url:
+        required: true
+        type: string
+      schema_introspection_url:
+        required: true
+        type: string
 permissions:
   contents: read
 jobs:
@@ -14,15 +33,23 @@ jobs:
           node-version: 24
       - run: npm install --ignore-scripts
       - run: mkdir artifacts
+      - name: Download and verify stage schema
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          SCHEMA_HASH: ${{ inputs.schema_hash }}
+          SCHEMA_SDL_URL: ${{ inputs.schema_sdl_url }}
+          SCHEMA_INTROSPECTION_URL: ${{ inputs.schema_introspection_url }}
+        run: bash scripts/fetch-stage-schema.sh
       - name: Derive version from tag
-        run: |
-          version="${GITHUB_REF_NAME#v}"
-          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([+-].+)?$ ]]
-          npm version "$version" --no-git-tag-version
+        env:
+          PREVIEW_VERSION: ${{ inputs.preview_version }}
+        run: bash scripts/set-package-version.sh
       - run: npm pack --pack-destination artifacts
         env:
           HYPERFLOW_AUTH_HEADER: ${{ vars.HYPERFLOW_AUTH_HEADER }}
           HYPERFLOW_AUTH_VALUE: ${{ secrets.HYPERFLOW_AUTH_VALUE }}
+          HYPERFLOW_SCHEMA_FILE: ${{ github.event_name == 'workflow_dispatch' && 'stage-introspection.json' || '' }}
+          HYPERFLOW_DEFAULT_API_URL: ${{ github.event_name == 'workflow_dispatch' && 'https://stage.api.hyperflowlabs.com/graphql' || '' }}
       - uses: actions/upload-artifact@v4
         with:
           name: npm-package
@@ -45,14 +72,9 @@ jobs:
           name: npm-package
           path: artifacts
       - name: Test installed package and declarations
-        run: |
-          mkdir package-test
-          cp -r tests examples package-test/
-          cd package-test
-          npm init --yes
-          npm install --ignore-scripts --no-package-lock ../artifacts/*.tgz graphql@16.11.0 typescript@5.9.3
-          node --test tests/*.test.mjs
-          npx tsc --strict --noEmit --target ES2022 --module Node16 --moduleResolution Node16 tests/types.ts
+        env:
+          HYPERFLOW_EXPECTED_API_URL: ${{ github.event_name == 'workflow_dispatch' && 'https://stage.api.hyperflowlabs.com/graphql' || 'https://api.hyperflowlabs.com/graphql' }}
+        run: bash scripts/test-package.sh
   publish:
     needs: [build, test]
     runs-on: ubuntu-latest
@@ -70,8 +92,6 @@ jobs:
           name: npm-package
           path: artifacts
       - name: Publish tested artifact using npm trusted publishing
-        run: |
-          version="${GITHUB_REF_NAME#v}"
-          tag=latest
-          if [[ "$version" == *-* ]]; then tag=next; fi
-          npm publish ./artifacts/*.tgz --access public --provenance --tag "$tag"
+        env:
+          PREVIEW_VERSION: ${{ inputs.preview_version }}
+        run: bash scripts/publish-package.sh

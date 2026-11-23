@@ -1,3 +1,4 @@
+import {readFile, writeFile} from "node:fs/promises";
 import { generate } from "@genql/cli";
 import {
   buildClientSchema, getIntrospectionQuery, isScalarType,
@@ -10,14 +11,19 @@ if (process.env.HYPERFLOW_AUTH_VALUE) {
   headers[process.env.HYPERFLOW_AUTH_HEADER || "x-api-key"] =
     process.env.HYPERFLOW_AUTH_VALUE;
 }
-const response = await fetch(url, {
-  method: "POST", headers, signal: AbortSignal.timeout(30_000),
-  body: JSON.stringify({query: getIntrospectionQuery()}),
-});
-if (!response.ok) {
-  throw new Error(`Schema introspection failed: HTTP ${response.status}; rerun after rate limits reset.`);
+let result;
+if (process.env.HYPERFLOW_SCHEMA_FILE) {
+  result = JSON.parse(await readFile(process.env.HYPERFLOW_SCHEMA_FILE, "utf8"));
+} else {
+  const response = await fetch(url, {
+    method: "POST", headers, signal: AbortSignal.timeout(30_000),
+    body: JSON.stringify({query: getIntrospectionQuery()}),
+  });
+  if (!response.ok) {
+    throw new Error(`Schema introspection failed: HTTP ${response.status}; rerun after rate limits reset.`);
+  }
+  result = await response.json();
 }
-const result = await response.json();
 if (result.errors?.length || !result.data) {
   throw new Error("Schema introspection failed: GraphQL errors or missing data.");
 }
@@ -31,3 +37,6 @@ await generate({
   schema: printSchema(schema), output: "./src/generated",
   scalarTypes, sortProperties: true,
 });
+const endpoint = process.env.HYPERFLOW_DEFAULT_API_URL || "https://api.hyperflowlabs.com/graphql";
+await writeFile("./src/generated/default-endpoint.ts",
+  `export const DEFAULT_ENDPOINT = ${JSON.stringify(endpoint)};\n`);
